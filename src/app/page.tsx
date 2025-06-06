@@ -1,21 +1,41 @@
 "use client";
 
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/Button';
-import { ArrowRight, Users, DollarSign, MessageSquare, CheckCircle, Sparkles, Zap, Target, Shield } from 'lucide-react';
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { Logo } from '@/components/Logo';
-import Image from 'next/image';
+import {
+  motion,
+  useScroll,
+  useTransform,
+  AnimatePresence,
+} from "framer-motion";
+import { Button } from "@/components/ui/Button";
+import {
+  ArrowRight,
+  MessageSquare,
+  Sparkles,
+  Zap,
+  Target,
+  Shield,
+} from "lucide-react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { Logo } from "@/components/Logo";
+import Image from "next/image";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 60 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] } },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] },
+  },
 };
 
 const fadeInScale = {
   initial: { opacity: 0, scale: 0.8 },
-  animate: { opacity: 1, scale: 1, transition: { duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] } },
+  animate: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] },
+  },
 };
 
 const staggerContainer = {
@@ -29,12 +49,17 @@ const staggerContainer = {
 
 const featureCardVariants = {
   initial: { opacity: 0, y: 50, scale: 0.9 },
-  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: 'easeOut' } },
-  hover: { 
-    y: -10, 
-    scale: 1.05, 
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
+  hover: {
+    y: -10,
+    scale: 1.05,
     boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-    transition: { duration: 0.3 } 
+    transition: { duration: 0.3 },
   },
 };
 
@@ -46,8 +71,8 @@ const floatingAnimation = {
       duration: 6,
       ease: "easeInOut",
       repeat: Infinity,
-    }
-  }
+    },
+  },
 };
 
 export default function HomePage() {
@@ -56,11 +81,11 @@ export default function HomePage() {
   const [currentImage, setCurrentImage] = useState(0);
   const [failedImages, setFailedImages] = useState<string[]>([]);
   const { scrollYProgress } = useScroll();
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
-  
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+
   const images = [
     "/images/startup1.jpeg",
-    "/images/startup2.jpeg", 
+    "/images/startup2.jpeg",
     "/images/startup3.jpeg",
     "/images/startup4.jpeg",
   ];
@@ -107,12 +132,14 @@ export default function HomePage() {
               onMouseLeave={() => setIsImageHovered(false)}
             >
               <Image
-                src={failedImages.includes(images[currentImage]) 
-                  ? `https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1920&h=1080&fit=crop` 
-                  : images[currentImage]}
+                src={
+                  failedImages.includes(images[currentImage])
+                    ? `https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1920&h=1080&fit=crop`
+                    : images[currentImage]
+                }
                 alt={`Startup Innovation ${currentImage + 1}`}
                 fill
-                style={{ objectFit: 'cover' }}
+                style={{ objectFit: "cover" }}
                 className="opacity-20"
                 priority={currentImage === 0}
                 onError={() => handleImageError(images[currentImage])}
@@ -129,9 +156,9 @@ export default function HomePage() {
             animate="animate"
             className="mb-8"
           >
-           <Logo/>
+            <Logo />
           </motion.div>
-          
+
           <motion.div
             variants={fadeInScale}
             initial="initial"
@@ -152,18 +179,21 @@ export default function HomePage() {
           >
             Startup Connect
           </motion.h1>
-          
+
           <motion.p
             variants={fadeInUp}
             initial="initial"
             animate="animate"
             className="text-xl md:text-2xl text-gray-300 max-w-4xl mx-auto mb-12 leading-relaxed"
           >
-            Where visionary entrepreneurs meet forward-thinking investors. 
+            Where visionary entrepreneurs meet forward-thinking investors.
             <br className="hidden md:block" />
-            <span className="text-purple-300 font-semibold">Transform ideas into reality</span> with our cutting-edge platform.
+            <span className="text-purple-300 font-semibold">
+              Transform ideas into reality
+            </span>{" "}
+            with our cutting-edge platform.
           </motion.p>
-          
+
           <motion.div
             variants={staggerContainer}
             initial="initial"
@@ -183,7 +213,7 @@ export default function HomePage() {
                 </Link>
               </Button>
             </motion.div>
-            
+
             <motion.div variants={fadeInUp}>
               <Button
                 asChild
@@ -191,12 +221,10 @@ export default function HomePage() {
                 className="px-8 py-4 rounded-full text-lg font-semibold border-2 border-purple-400/50 text-purple-300 hover:bg-purple-500/10 hover:border-purple-400 backdrop-blur-sm transition-all duration-300 hover:scale-105"
                 aria-label="Join as Investor"
               >
-                <Link href="/register">
-                  Join as Investor
-                </Link>
+                <Link href="/register">Join as Investor</Link>
               </Button>
             </motion.div>
-            
+
             <motion.div variants={fadeInUp}>
               <Button
                 asChild
@@ -204,9 +232,7 @@ export default function HomePage() {
                 className="px-8 py-4 rounded-full text-lg font-semibold text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-sm transition-all duration-300"
                 aria-label="Login"
               >
-                <Link href="/login">
-                  Login
-                </Link>
+                <Link href="/login">Login</Link>
               </Button>
             </motion.div>
           </motion.div>
@@ -238,7 +264,8 @@ export default function HomePage() {
               Why Choose Us?
             </h2>
             <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-              Experience the future of startup funding with our revolutionary platform
+              Experience the future of startup funding with our revolutionary
+              platform
             </p>
           </motion.div>
 
@@ -247,27 +274,31 @@ export default function HomePage() {
               {
                 icon: Shield,
                 title: "Secure & Verified",
-                description: "Bank-grade security with OTP verification and encrypted transactions for complete peace of mind.",
-                gradient: "from-blue-500 to-cyan-500"
+                description:
+                  "Bank-grade security with OTP verification and encrypted transactions for complete peace of mind.",
+                gradient: "from-blue-500 to-cyan-500",
               },
               {
                 icon: Zap,
                 title: "Lightning Fast",
-                description: "Connect with investors in minutes, not months. Our AI-powered matching accelerates success.",
-                gradient: "from-purple-500 to-pink-500"
+                description:
+                  "Connect with investors in minutes, not months. Our AI-powered matching accelerates success.",
+                gradient: "from-purple-500 to-pink-500",
               },
               {
                 icon: Target,
                 title: "Smart Matching",
-                description: "Advanced algorithms connect entrepreneurs with perfectly aligned investors based on industry and goals.",
-                gradient: "from-green-500 to-emerald-500"
+                description:
+                  "Advanced algorithms connect entrepreneurs with perfectly aligned investors based on industry and goals.",
+                gradient: "from-green-500 to-emerald-500",
               },
               {
                 icon: MessageSquare,
                 title: "Real-Time Chat",
-                description: "Instant communication with built-in video calls, file sharing, and collaboration tools.",
-                gradient: "from-orange-500 to-red-500"
-              }
+                description:
+                  "Instant communication with built-in video calls, file sharing, and collaboration tools.",
+                gradient: "from-orange-500 to-red-500",
+              },
             ].map((feature, index) => (
               <motion.div
                 key={index}
@@ -276,16 +307,20 @@ export default function HomePage() {
                 className="group relative"
               >
                 <div className="relative bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl p-8 rounded-3xl border border-slate-700/50 hover:border-purple-500/50 transition-all duration-500 h-full">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 rounded-3xl transition-opacity duration-500`}></div>
-                  
-                  <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.gradient} mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 rounded-3xl transition-opacity duration-500`}
+                  ></div>
+
+                  <div
+                    className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${feature.gradient} mb-6 group-hover:scale-110 transition-transform duration-300`}
+                  >
                     <feature.icon className="h-8 w-8 text-white" />
                   </div>
-                  
+
                   <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-purple-300 transition-colors">
                     {feature.title}
                   </h3>
-                  
+
                   <p className="text-gray-400 group-hover:text-gray-300 transition-colors leading-relaxed">
                     {feature.description}
                   </p>
@@ -310,7 +345,7 @@ export default function HomePage() {
               { number: "10K+", label: "Entrepreneurs" },
               { number: "5K+", label: "Investors" },
               { number: "$50M+", label: "Funded" },
-              { number: "98%", label: "Success Rate" }
+              { number: "98%", label: "Success Rate" },
             ].map((stat, index) => (
               <motion.div key={index} variants={fadeInUp} className="group">
                 <div className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2 group-hover:scale-110 transition-transform">
@@ -332,7 +367,7 @@ export default function HomePage() {
         className="relative py-32 px-4 mx-4 md:mx-8 rounded-3xl bg-gradient-to-r from-purple-600/20 to-pink-600/20 backdrop-blur-xl border border-purple-500/30"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-pink-600/10 rounded-3xl"></div>
-        
+
         <div className="relative text-center max-w-4xl mx-auto">
           <motion.h2
             variants={fadeInUp}
@@ -340,14 +375,15 @@ export default function HomePage() {
           >
             Ready to Build the Future?
           </motion.h2>
-          
+
           <motion.p
             variants={fadeInUp}
             className="text-xl md:text-2xl text-gray-300 mb-12 leading-relaxed"
           >
-            Join thousands of successful entrepreneurs and investors who've transformed their dreams into reality
+            Join thousands of successful entrepreneurs and investors who'1ve
+            transformed their dreams into reality
           </motion.p>
-          
+
           <motion.div
             variants={fadeInUp}
             onHoverStart={() => setIsHovered(true)}
@@ -383,11 +419,28 @@ export default function HomePage() {
             viewport={{ once: true }}
           >
             <Logo />
-            <p className="mt-4 text-gray-400 text-lg">© 2025 Startup Connect. All rights reserved.</p>
+            <p className="mt-4 text-gray-400 text-lg">
+              © 2025 Startup Connect. All rights reserved.
+            </p>
             <div className="mt-6 flex justify-center gap-8 text-gray-400">
-              <Link href="/privacy" className="hover:text-purple-400 transition-colors">Privacy Policy</Link>
-              <Link href="/terms" className="hover:text-purple-400 transition-colors">Terms of Service</Link>
-              <Link href="/contact" className="hover:text-purple-400 transition-colors">Contact Us</Link>
+              <Link
+                href="/privacy"
+                className="hover:text-purple-400 transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                href="/terms"
+                className="hover:text-purple-400 transition-colors"
+              >
+                Terms of Service
+              </Link>
+              <Link
+                href="/contact"
+                className="hover:text-purple-400 transition-colors"
+              >
+                Contact Us
+              </Link>
             </div>
           </motion.div>
         </div>
