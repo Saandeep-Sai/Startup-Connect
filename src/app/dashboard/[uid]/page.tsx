@@ -8,11 +8,11 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { motion } from "framer-motion";
 import { User, Bot, Save, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/hooks/use-toast";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/Card";
 
 interface UserData {
   firstName: string;
@@ -140,7 +140,7 @@ export default function Profile() {
       variants={pageVariants}
       initial="initial"
       animate="animate"
-      className="p-6 ml-0 lg:ml-64 max-w-4xl mx-auto"
+      className="p-6 max-w-4xl mx-auto"
     >
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">

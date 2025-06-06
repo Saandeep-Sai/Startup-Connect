@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useContext, useEffect, useState } from "react";
@@ -15,13 +16,7 @@ import {
 } from "firebase/firestore";
 import { Trash2, Search, MessageCircle, User } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/Card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -201,29 +196,29 @@ export default function AdminPage() {
       variants={pageVariants}
       initial="initial"
       animate="animate"
-      className="flex-1 p-4 ml-0 lg:ml-60 max-w-5xl mx-auto"
+      className="flex-1 p-6 max-w-6xl mx-auto"
     >
-      <header className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">
+      <header className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">
           Admin Dashboard
         </h1>
         <NotificationBell />
       </header>
-      <div className="mb-4">
+      <div className="mb-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
           <Input
-            placeholder="Search users..."
+            placeholder="Search users by name, email, or role..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 w-full max-w-sm text-sm"
+            className="pl-10 w-full max-w-md"
             variant="outline"
           />
         </div>
       </div>
       <Card variant="elevated" className="bg-white dark:bg-gray-800">
         <CardHeader>
-          <CardTitle className="text-gray-900 dark:text-gray-100 text-lg">
+          <CardTitle className="text-gray-900 dark:text-gray-100">
             Manage Users
           </CardTitle>
         </CardHeader>
@@ -233,20 +228,20 @@ export default function AdminPage() {
               No users found.
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {filteredUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-md"
+                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-md"
                 >
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {user.firstName || ""} {user.lastName || ""}
                     </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-300">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       {user.email || "N/A"}
                     </p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 capitalize">
+                    <p className="text-sm text-blue-600 dark:text-blue-400 capitalize">
                       {user.role || "N/A"}
                     </p>
                   </div>
@@ -255,18 +250,17 @@ export default function AdminPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleChat(user.id)}
-                      className="text-blue-600 dark:text-blue-400 text-xs"
+                      className="text-blue-600 dark:text-blue-400"
                     >
-                      <MessageCircle className="w-3 h-3 mr-1" />
+                      <MessageCircle className="w-4 h-4 mr-2" />
                       Chat
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => handleDeleteUser(user.id)}
-                      className="text-xs"
                     >
-                      <Trash2 className="w-3 h-3 mr-1" />
+                      <Trash2 className="w-4 h-4 mr-2" />
                       Delete
                     </Button>
                   </div>
@@ -276,55 +270,6 @@ export default function AdminPage() {
           )}
         </CardContent>
       </Card>
-
-      {isChatModalOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-        >
-          <Card
-            variant="elevated"
-            className="p-4 max-w-sm w-full bg-white dark:bg-gray-800"
-          >
-            <CardHeader>
-              <CardTitle className="text-lg">Start a Conversation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Input
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-                placeholder="Type your message..."
-                variant="outline"
-                className="text-sm"
-              />
-            </CardContent>
-            <CardFooter className="flex justify-end gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setChatModalOpen(false);
-                  setChatMessage("");
-                  setSelectedUserId(null);
-                }}
-                className="text-xs"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleStartChat}
-                disabled={!chatMessage.trim()}
-                className="text-xs"
-              >
-                Send
-              </Button>
-            </CardFooter>
-          </Card>
-        </motion.div>
-      )}
     </motion.div>
   );
 }

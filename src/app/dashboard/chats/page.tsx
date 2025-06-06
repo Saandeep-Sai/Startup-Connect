@@ -5,7 +5,16 @@ import { useRouter } from "next/navigation";
 import { useContext } from "react";
 import { AuthContext } from "@/components/AuthProvider";
 import { db } from "@/firebase";
-import { collection, query, where, getDocs, getDoc, doc, orderBy, limit } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  getDoc,
+  doc,
+  orderBy,
+  limit,
+} from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -62,7 +71,9 @@ export default function ChatsPage() {
         for (const chatDoc of chatsSnapshot.docs) {
           const chatData = { id: chatDoc.id, ...chatDoc.data() } as Chat;
           chatsData.push(chatData);
-          const otherParticipant = chatData.participants.find((uid) => uid !== user.uid);
+          const otherParticipant = chatData.participants.find(
+            (uid) => uid !== user.uid
+          );
           if (otherParticipant && !userCache.has(otherParticipant)) {
             userIdsToFetch.add(otherParticipant);
           }
@@ -93,9 +104,10 @@ export default function ChatsPage() {
             return {
               uid,
               data: {
-                name: userData.firstName && userData.lastName
-                  ? `${userData.firstName} ${userData.lastName}`
-                  : `User_${uid.slice(0, 8)}`,
+                name:
+                  userData.firstName && userData.lastName
+                    ? `${userData.firstName} ${userData.lastName}`
+                    : `User_${uid.slice(0, 8)}`,
                 photoURL: userData.photoURL,
               } as User,
             };
@@ -143,8 +155,7 @@ export default function ChatsPage() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="p-6 max-w-4xl mx-auto"
+      transition={{ duration: 0.5 }}className="p-6 ml-0 lg:ml-64 max-w-4xl mx-auto"
     >
       <h1 className="mb-8 text-3xl font-bold text-blue-600 dark:text-blue-400">
         Your Conversations
@@ -156,9 +167,13 @@ export default function ChatsPage() {
       ) : (
         <div className="space-y-4">
           {chats.map((chat, index) => {
-            const otherParticipant = chat.participants.find((uid) => uid !== user?.uid);
+            const otherParticipant = chat.participants.find(
+              (uid) => uid !== user?.uid
+            );
             const participantData = otherParticipant
-              ? userCache.get(otherParticipant) || { name: `User_${otherParticipant.slice(0, 8)}` }
+              ? userCache.get(otherParticipant) || {
+                  name: `User_${otherParticipant.slice(0, 8)}`,
+                }
               : { name: "Unknown" };
             return (
               <Card
@@ -170,7 +185,10 @@ export default function ChatsPage() {
               >
                 <div className="flex items-center gap-4 p-4">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={participantData.photoURL || "/images/avatar.png"} alt={participantData.name} />
+                    <AvatarImage
+                      src={participantData.photoURL || "/images/avatar.png"}
+                      alt={participantData.name}
+                    />
                     <AvatarFallback>{participantData.name[0]}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
