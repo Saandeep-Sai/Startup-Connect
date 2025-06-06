@@ -14,46 +14,14 @@ import Link from "next/link";
 import { Logo } from "@/components/Logo";
 import { useToast } from "@/hooks/use-toast";
 
-const pageVariants = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+const fadeInUp = {
+  initial: { opacity: 0, y: 60 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] } },
 };
 
 const buttonVariants = {
   hover: { scale: 1.05 },
   tap: { scale: 0.95 },
-};
-
-const sideAnimationVariants = {
-  initial: { opacity: 0, x: -50 },
-  animate: {
-    opacity: 1,
-    x: 0,
-    transition: {
-      duration: 0.8,
-      ease: "easeOut",
-      staggerChildren: 0.2,
-    },
-  },
-};
-
-const circleVariants = {
-  initial: { opacity: 0, scale: 0.8, y: 0 },
-  animate: {
-    opacity: 1,
-    scale: [1, 1.1, 1],
-    y: [0, -20, 0],
-    boxShadow: [
-      "0 0 10px rgba(59, 130, 246, 0.5)",
-      "0 0 20px rgba(59, 130, 246, 0.8)",
-      "0 0 10px rgba(59, 130, 246, 0.5)",
-    ],
-    transition: {
-      duration: 2,
-      yoyo: Infinity,
-      ease: "easeInOut",
-    },
-  },
 };
 
 export default function Login() {
@@ -90,59 +58,22 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 relative overflow-hidden">
-      {/* Left Side Animation */}
-      <motion.div
-        variants={sideAnimationVariants}
-        initial="initial"
-        animate="animate"
-        className="hidden md:block absolute left-0 top-0 h-full w-1/4"
-      >
-        <motion.div
-          variants={circleVariants}
-          className="w-16 h-16 bg-blue-200 dark:bg-blue-700 rounded-full absolute top-1/4 left-10"
-        />
-        <motion.div
-          variants={circleVariants}
-          className="w-12 h-12 bg-blue-300 dark:bg-blue-600 rounded-full absolute top-1/2 left-20"
-        />
-        <motion.div
-          variants={circleVariants}
-          className="w-20 h-20 bg-blue-100 dark:bg-blue-800 rounded-full absolute bottom-1/4 left-16"
-        />
-      </motion.div>
-      {/* Right Side Animation */}
-      <motion.div
-        variants={sideAnimationVariants}
-        initial="initial"
-        animate="animate"
-        className="hidden md:block absolute right-0 top-0 h-full w-1/4"
-      >
-        <motion.div
-          variants={circleVariants}
-          className="w-16 h-16 bg-blue-200 dark:bg-blue-700 rounded-full absolute top-1/3 right-12"
-        />
-        <motion.div
-          variants={circleVariants}
-          className="w-14 h-14 bg-blue-300 dark:bg-blue-600 rounded-full absolute top-2/3 right-20"
-        />
-        <motion.div
-          variants={circleVariants}
-          className="w-18 h-18 bg-blue-100 dark:bg-blue-800 rounded-full absolute bottom-1/5 right-16"
-        />
-      </motion.div>
-      {/* Main Content */}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      </div>
+
       <Card
         variant="elevated"
-        className="w-full max-w-md p-6 card-hover z-10 bg-white dark:bg-gray-800"
-        style={{
-          boxShadow: "0 10px 30px rgba(59, 130, 246, 0.3), 0 0 20px rgba(124, 58, 237, 0.2)",
-        }}
+        className="w-full max-w-md p-6 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 z-10"
       >
-        <motion.div variants={pageVariants} initial="initial" animate="animate">
+        <motion.div variants={fadeInUp} initial="initial" animate="animate">
           <div className="flex flex-col items-center gap-2 mb-6">
             <Logo />
-            <h1 className="text-3xl font-bold text-blue-600 dark:text-blue-400 text-center">
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
               Login
             </h1>
           </div>
@@ -150,14 +81,14 @@ export default function Login() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="mb-6 p-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-center"
+              className="mb-6 p-3 bg-red-500/20 text-red-300 rounded-lg text-center"
             >
               {error}
             </motion.div>
           )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
                 Email
               </label>
               <Input
@@ -167,10 +98,11 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 required
+                className="bg-slate-900/50 text-gray-100 border-slate-700"
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
                 Password
               </label>
               <Input
@@ -180,17 +112,22 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
+                className="bg-slate-900/50 text-gray-100 border-slate-700"
               />
             </div>
             <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
-              <Button type="submit" aria-label="Sign In" className="w-full btn-primary">
+              <Button
+                type="submit"
+                aria-label="Sign In"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              >
                 Sign In
               </Button>
             </motion.div>
           </form>
-          <p className="text-gray-600 dark:text-gray-300 mt-6 text-center">
+          <p className="text-gray-300 mt-6 text-center">
             Don’t have an account?{" "}
-            <Link href="/register" className="text-blue-600 dark:text-blue-400 hover:underline">
+            <Link href="/register" className="text-purple-400 hover:underline">
               Register
             </Link>
           </p>

@@ -21,6 +21,16 @@ interface Message {
   timestamp: Timestamp;
 }
 
+const fadeInUp = {
+  initial: { opacity: 0, y: 60 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] } },
+};
+
+const staggerContainer = {
+  initial: {},
+  animate: { transition: { staggerChildren: 0.15 } },
+};
+
 export default function ChatPage() {
   const { user, loading: authLoading } = useContext(AuthContext);
   const router = useRouter();
@@ -166,61 +176,69 @@ export default function ChatPage() {
 
   if (isLoading || authLoading || !user || !chatId) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-600 dark:text-blue-400" />
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+        <Loader2 className="h-12 w-12 animate-spin text-purple-400" />
       </div>
     );
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 p-6 max-w-3xl mx-auto"
+      variants={staggerContainer}
+      initial="initial"
+      animate="animate"
+      className="min-h-screen flex flex-col  relative"
     >
-      <div className="flex items-center gap-3 mb-6">
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      </div>
+
+      <motion.div variants={fadeInUp} className="flex items-center gap-3 mb-8 z-10">
         <Avatar className="h-10 w-10">
           <AvatarImage src="/images/avatar.png" alt={otherParticipantName} />
           <AvatarFallback>{otherParticipantName[0]}</AvatarFallback>
         </Avatar>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
           Chat with {otherParticipantName}
         </h1>
-      </div>
-      <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 overflow-y-auto max-h-[calc(100vh-200px)]">
+      </motion.div>
+      <div className="flex-1 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6 overflow-y-auto max-h-[calc(100vh-200px)] z-10">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-600 dark:text-gray-300">
+          <div className="text-center text-gray-300">
             No messages yet. Start the conversation!
           </div>
         ) : (
           <div className="space-y-4">
             {messages.map((message) => (
-              <div
+              <motion.div
                 key={message.id}
+                variants={fadeInUp}
                 className={`flex ${message.senderId === user.uid ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[70%] p-3 rounded-lg shadow-md ${
+                  className={`max-w-[70%] p-3 rounded-xl shadow-md ${
                     message.senderId === user.uid
-                      ? "bg-blue-600 text-white rounded-br-none"
-                      : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-none"
+                      ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-br-none"
+                      : "bg-slate-900/50 text-gray-100 rounded-bl-none"
                   }`}
                 >
                   <p className="text-sm">{message.text}</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-xs text-gray-400 mt-1">
                     {message.timestamp?.toDate().toLocaleTimeString()}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
             <div ref={messagesEndRef} />
           </div>
         )}
       </div>
-      <form
+      <motion.form
+        variants={fadeInUp}
         onSubmit={handleSendMessage}
-        className="mt-4 flex items-center gap-2 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md"
+        className="mt-4 flex items-center gap-2 bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl p-4 rounded-xl border border-slate-700/50 z-10"
       >
         <Input
           type="text"
@@ -228,12 +246,15 @@ export default function ChatPage() {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewMessage(e.target.value)}
           placeholder="Type your message..."
           variant="outline"
-          className="flex-1"
+          className="flex-1 bg-slate-900/50 text-gray-100 border-slate-700"
         />
-        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button
+          type="submit"
+          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+        >
           <Send className="h-5 w-5" />
         </Button>
-      </form>
+      </motion.form>
     </motion.div>
   );
 }

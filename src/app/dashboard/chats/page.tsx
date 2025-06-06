@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -36,6 +37,17 @@ interface User {
   name: string;
   photoURL?: string;
 }
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 60 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.6, -0.05, 0.01, 0.99] } },
+};
+
+const featureCardVariants = {
+  initial: { opacity: 0, y: 50, scale: 0.9 },
+  animate: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.6, ease: 'easeOut' } },
+  hover: { y: -10, scale: 1.05, transition: { duration: 0.3 } },
+};
 
 export default function ChatsPage() {
   const { user, loading: authLoading } = useContext(AuthContext);
@@ -78,7 +90,6 @@ export default function ChatsPage() {
             userIdsToFetch.add(otherParticipant);
           }
 
-          // Fetch last message
           const messagesQuery = query(
             collection(db, "chats", chatDoc.id, "messages"),
             orderBy("timestamp", "desc"),
@@ -92,7 +103,6 @@ export default function ChatsPage() {
           }
         }
 
-        // Fetch names and photos for other participants
         const userPromises = Array.from(userIdsToFetch).map(async (uid) => {
           try {
             const userDoc = await getDoc(doc(db, "users", uid));
@@ -145,27 +155,34 @@ export default function ChatsPage() {
 
   if (isLoading || authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-600 dark:text-blue-400" />
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white">
+        <Loader2 className="h-12 w-12 animate-spin text-purple-400" />
       </div>
     );
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}className="p-6 ml-0 lg:ml-64 max-w-4xl mx-auto"
+      variants={fadeInUp}
+      initial="initial"
+      animate="animate"
+      className="relative"
     >
-      <h1 className="mb-8 text-3xl font-bold text-blue-600 dark:text-blue-400">
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      </div>
+
+      <h1 className="mb-8 text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 z-10">
         Your Conversations
       </h1>
       {chats.length === 0 ? (
-        <div className="text-center text-lg text-gray-600 dark:text-gray-300">
+        <div className="text-center text-lg text-gray-300 z-10">
           No chats yet. Start a conversation from the posts page!
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 z-10">
           {chats.map((chat, index) => {
             const otherParticipant = chat.participants.find(
               (uid) => uid !== user?.uid
@@ -176,46 +193,52 @@ export default function ChatsPage() {
                 }
               : { name: "Unknown" };
             return (
-              <Card
+              <motion.div
                 key={chat.id}
-                variant="elevated"
-                className="group bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 cursor-pointer"
-                style={{ animationDelay: `${index * 100}ms` }}
-                onClick={() => handleChatClick(chat.id)}
+                variants={featureCardVariants}
+                initial="initial"
+                animate="animate"
+                whileHover="hover"
               >
-                <div className="flex items-center gap-4 p-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage
-                      src={participantData.photoURL || "/images/avatar.png"}
-                      alt={participantData.name}
-                    />
-                    <AvatarFallback>{participantData.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      {participantData.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                      {chat.lastMessage || "No messages yet"}
-                    </p>
-                    {chat.lastMessageTime && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {chat.lastMessageTime.toDate().toLocaleString()}
+                <Card
+                  variant="elevated"
+                  className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-xl border border-slate-700/50 hover:border-purple-500/50 transition-all duration-300 cursor-pointer"
+                  onClick={() => handleChatClick(chat.id)}
+                >
+                  <div className="flex items-center gap-4 p-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage
+                        src={participantData.photoURL || "/images/avatar.png"}
+                        alt={participantData.name}
+                      />
+                      <AvatarFallback>{participantData.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-100">
+                        {participantData.name}
+                      </h3>
+                      <p className="text-sm text-gray-300 truncate">
+                        {chat.lastMessage || "No messages yet"}
                       </p>
-                    )}
+                      {chat.lastMessageTime && (
+                        <p className="text-xs text-gray-400">
+                          {chat.lastMessageTime.toDate().toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className="text-purple-400 hover:bg-purple-500/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleChatClick(chat.id);
+                      }}
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    className="text-blue-600 dark:text-blue-400"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleChatClick(chat.id);
-                    }}
-                  >
-                    <MessageCircle className="w-5 h-5" />
-                  </Button>
-                </div>
-              </Card>
+                </Card>
+              </motion.div>
             );
           })}
         </div>
