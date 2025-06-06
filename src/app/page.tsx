@@ -129,7 +129,7 @@ export default function HomePage() {
             animate="animate"
             className="mb-8"
           >
-            <Logo />
+           <Logo/>
           </motion.div>
           
           <motion.div
