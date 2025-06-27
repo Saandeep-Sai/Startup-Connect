@@ -9,15 +9,20 @@ import { LoaderCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { auth, db } from '@/firebase';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 import { sendOtpAction, verifyOtpAction } from '@/app/actions/authActions';
 import { motion } from 'framer-motion';
+import bcrypt from 'bcryptjs';
 
 const buttonVariants = {
   hover: { scale: 1.05 },
   tap: { scale: 0.95 },
 };
+
+interface OtpFormData {
+  otp: string;
+}
 
 export default function ActivateAccountPage() {
   const router = useRouter();
@@ -28,6 +33,17 @@ export default function ActivateAccountPage() {
   const [otpTimer, setOtpTimer] = useState(300);
   const [isOtpExpired, setIsOtpExpired] = useState(false);
   const [otp, setOtp] = useState('');
+  const [storedOtp, setStoredOtp] = useState<string | null>(null);
+  const [otpExpiresAt, setOtpExpiresAt] = useState<string | null>(null);
+  const [pending, setPending] = useState<null | {
+    uid: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    password: string;
+    role: string;
+    createdAt: string;
+  }>(null);
 
   useEffect(() => {
     if (otpTimer <= 0) {
@@ -48,18 +64,80 @@ export default function ActivateAccountPage() {
   };
 
   useEffect(() => {
-    console.log('Checking sessionStorage for activationEmail:', sessionStorage.getItem('activationEmail'));
-    let email = sessionStorage.getItem('activationEmail');
+    console.log('Checking sessionStorage for pendingRegistration:', sessionStorage.getItem('pendingRegistration'));
+    const raw = sessionStorage.getItem('pendingRegistration');
+    if (!raw) {
+      toast({
+        title: "Error",
+        description: "No registration data. Please register again.",
+        variant: "destructive",
+      });
+      router.push('/register');
+      return;
+    }
+    const data = JSON.parse(raw);
+    if (!data.uid || !data.email || !data.firstName || !data.lastName || !data.role || !data.createdAt) {
+      console.log('Invalid pendingRegistration data:', data);
+      toast({
+        title: "Error",
+        description: "Invalid registration data. Please register again.",
+        variant: "destructive",
+      });
+      router.push('/register');
+      return;
+    }
+    setPending(data);
+
+    // Check for stored OTP
+    const otpDataRaw = sessionStorage.getItem('otpData');
+    if (!otpDataRaw) {
+      console.log('No OTP data found in sessionStorage');
+      toast({
+        title: "Error",
+        description: "No OTP data found. Please resend OTP.",
+        variant: "destructive",
+      });
+      setIsOtpExpired(true);
+      return;
+    }
+    try {
+      const otpData = JSON.parse(otpDataRaw);
+      if (!otpData.otp || !otpData.expiresAt) {
+        console.log('Invalid OTP data in sessionStorage:', otpData);
+        toast({
+          title: "Error",
+          description: "Invalid OTP data. Please resend OTP.",
+          variant: "destructive",
+        });
+        setIsOtpExpired(true);
+        return;
+      }
+      setStoredOtp(otpData.otp);
+      setOtpExpiresAt(otpData.expiresAt);
+      const timeLeft = Math.max(0, Math.floor((new Date(otpData.expiresAt).getTime() - Date.now()) / 1000));
+      setOtpTimer(timeLeft);
+      setIsOtpExpired(timeLeft <= 0);
+      console.log('OTP data loaded from sessionStorage:', { otp: otpData.otp, expiresAt: otpData.expiresAt, timeLeft });
+    } catch (error: any) {
+      console.error('Error parsing OTP data:', error.message);
+      toast({
+        title: "Error",
+        description: "Failed to load OTP data. Please resend OTP.",
+        variant: "destructive",
+      });
+      setIsOtpExpired(true);
+    }
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       console.log('Auth state changed:', currentUser ? { uid: currentUser.uid, email: currentUser.email } : 'No user');
       if (currentUser) {
         setUser(currentUser);
+        let email: string | null = data.email || sessionStorage.getItem('activationEmail');
         if (!email && currentUser.email) {
           try {
             const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
             if (userDoc.exists()) {
-              email = userDoc.data().email;
+              email = userDoc.data().email ?? null;
               if (email) {
                 setActivationEmail(email);
                 sessionStorage.setItem('activationEmail', email);
@@ -76,18 +154,23 @@ export default function ActivateAccountPage() {
         // Check if already verified
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
         if (userDoc.exists() && userDoc.data().emailVerified) {
-          console.log('User already verified, redirecting to /dashboard');
+          console.log('User already verified, redirecting to /home');
+          sessionStorage.removeItem('pendingRegistration');
           sessionStorage.removeItem('activationEmail');
+          sessionStorage.removeItem('otpData');
           router.push('/dashboard');
         }
       } else {
         setUser(null);
         setActivationEmail(null);
+        setPending(null);
+        sessionStorage.removeItem('pendingRegistration');
         sessionStorage.removeItem('activationEmail');
+        sessionStorage.removeItem('otpData');
         toast({
-          title: "Activation Error",
+          title: "Error",
           description: "No user logged in. Please register again.",
-          variant: "destructive"
+          variant: "destructive",
         });
         router.push('/register');
       }
@@ -95,45 +178,82 @@ export default function ActivateAccountPage() {
     return () => unsubscribe();
   }, [router, toast]);
 
-  const handleOtpSubmit = async () => {
-    if (!user || !activationEmail || isOtpExpired) {
+  const handleOtpSubmit = async ({ otp: enteredOtp }: OtpFormData) => {
+    if (!user || !activationEmail || !pending) {
       toast({
         title: "Error",
-        description: isOtpExpired ? "OTP has expired. Please resend OTP." : "Invalid activation state.",
-        variant: "destructive"
+        description: "Invalid activation state.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!storedOtp || !otpExpiresAt) {
+      toast({
+        title: "Error",
+        description: "No OTP data available. Please resend OTP.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (isOtpExpired) {
+      toast({
+        title: "Error",
+        description: "OTP has expired. Please resend OTP.",
+        variant: "destructive",
       });
       return;
     }
     setIsLoading(true);
     try {
-      console.log('Submitting OTP for verification:', otp);
-      const verifyResponse = await verifyOtpAction(activationEmail, otp);
+      console.log('Submitting OTP for verification:', { enteredOtp, storedOtp, otpExpiresAt });
+      const verifyResponse = await verifyOtpAction(activationEmail, enteredOtp, storedOtp, otpExpiresAt);
       if (!verifyResponse.success) {
         console.log('OTP verification failed:', verifyResponse.message);
         throw new Error(verifyResponse.message);
       }
       console.log('OTP verified successfully for email:', activationEmail);
 
-      await updateDoc(doc(db, 'users', user.uid), {
-        emailVerified: true,
-        verifiedAt: new Date().toISOString()
-      });
-      
-      console.log('Email verified flag set in Firestore for UID:', user.uid);
+      // Ensure user is authenticated before writing to Firestore
+      if (!auth.currentUser) {
+        throw new Error('User not authenticated');
+      }
 
-      toast({
-        title: 'Account Activated!',
-        description: 'Your account is now active. Welcome to Startup Connect!',
-        className: 'bg-positive text-primary-foreground',
-      });
+      // Hash password
+      const hashedPassword = await bcrypt.hash(pending.password, 10);
+
+      // Write user profile to Firestore with merge option
+      await setDoc(doc(db, 'users', pending.uid), {
+        firstName: pending.firstName,
+        lastName: pending.lastName,
+        name: `${pending.firstName} ${pending.lastName}`,
+        email: pending.email,
+        role: pending.role,
+        password: hashedPassword,
+        emailVerified: true,
+        createdAt: pending.createdAt,
+        verifiedAt: new Date().toISOString(),
+      }, { merge: true });
+
+      console.log('User profile written to Firestore for UID:', pending.uid);
+
+      // Cleanup & redirect
+      sessionStorage.removeItem('pendingRegistration');
       sessionStorage.removeItem('activationEmail');
-      router.push('/dashboard');
+      sessionStorage.removeItem('otpData');
+      toast({
+        title: 'Activated!',
+        description: 'Welcome aboard!',
+      });
+      router.push('/home');
     } catch (error: any) {
       console.error('Activation error:', error.message, error.code);
+      const errorMessage = error.code === 'PERMISSION_DENIED'
+        ? 'Insufficient permissions to save user data. Please contact support at support@startupconnect.com.'
+        : error.message || 'Activation Error';
       toast({
         title: 'Activation Failed',
-        description: error.message || 'Activation Error',
-        variant: 'destructive'
+        description: errorMessage,
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -141,19 +261,33 @@ export default function ActivateAccountPage() {
   };
 
   const handleResendOtp = async () => {
-    if (!activationEmail) return;
+    if (!activationEmail) {
+      toast({
+        title: "Error",
+        description: "No email available for OTP resend.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsLoading(true);
     try {
       const otpResponse = await sendOtpAction(activationEmail);
       if (!otpResponse.success) {
         throw new Error(otpResponse.message);
       }
-      console.log('New OTP sent to:', activationEmail);
+      console.log('New OTP sent to:', activationEmail, 'OTP:', otpResponse.otp);
+      // Store new OTP in sessionStorage
+      sessionStorage.setItem('otpData', JSON.stringify({
+        otp: otpResponse.otp,
+        expiresAt: otpResponse.expiresAt,
+      }));
+      setStoredOtp(otpResponse.otp);
+      setOtpExpiresAt(otpResponse.expiresAt);
       setOtpTimer(300);
       setIsOtpExpired(false);
       toast({
-        title: 'New OTP Sent',
-        description: `A new OTP has been sent to ${activationEmail}.`,
+        title: 'OTP Sent',
+        description: `Check ${activationEmail}`,
         duration: 10000,
       });
     } catch (error: any) {
@@ -161,14 +295,14 @@ export default function ActivateAccountPage() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to resend OTP.',
-        variant: 'destructive'
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!user || !activationEmail) {
+  if (!user || !activationEmail || !pending) {
     return (
       <div className="text-center">
         <h1 className="mb-2 text-2xl font-bold">Activation Link Expired or Invalid</h1>
@@ -199,7 +333,7 @@ export default function ActivateAccountPage() {
         <Input
           placeholder="Enter the OTP from your email"
           value={otp}
-          onChange={(e) => setOtp(e.target.value)}
+          onChange={(e) => setOtp(e.target.value.trim())}
           disabled={isOtpExpired || isLoading}
         />
         <motion.div
@@ -209,7 +343,7 @@ export default function ActivateAccountPage() {
         >
           <Button
             className="w-full"
-            onClick={handleOtpSubmit}
+            onClick={() => handleOtpSubmit({ otp })}
             disabled={isLoading || isOtpExpired}
           >
             {isLoading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 'Verify OTP'}

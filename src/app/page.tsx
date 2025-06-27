@@ -380,7 +380,7 @@ export default function HomePage() {
             variants={fadeInUp}
             className="text-xl md:text-2xl text-gray-300 mb-12 leading-relaxed"
           >
-            Join thousands of successful entrepreneurs and investors who'1ve
+            Join thousands of successful entrepreneurs and investors who&#39;ve
             transformed their dreams into reality
           </motion.p>
 

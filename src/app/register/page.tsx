@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 /* src/app/register/page.tsx */
 "use client";
 
 import { useState, useContext } from "react";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth, db } from "@/firebase";
-import { doc, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword, updateProfile, setPersistence, browserSessionPersistence } from "firebase/auth";
+import { auth } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -35,6 +34,7 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("entrepreneur");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { loading } = useContext(AuthContext);
   const router = useRouter();
   const { toast } = useToast();
@@ -50,52 +50,81 @@ export default function Register() {
       return;
     }
 
+    setIsLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
+      console.log("handleRegister: Stashing data for:", email);
+      // 1️⃣ Stash form data in sessionStorage
+      sessionStorage.setItem(
+        "pendingRegistration",
+        JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+          role,
+          createdAt: new Date().toISOString(),
+        })
       );
-      const user = userCredential.user;
-      await updateProfile(user, { displayName: `${firstName} ${lastName}` });
-      await setDoc(doc(db, "users", user.uid), {
-        firstName,
-        lastName,
-        email,
-        role,
-        createdAt: new Date(),
-        isActive: false,
-      });
 
+      // 2️⃣ Set Firebase auth persistence
+      await setPersistence(auth, browserSessionPersistence);
+
+      // 3️⃣ Create auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      console.log("handleRegister: User created:", user.uid);
+
+      // 4️⃣ Update user profile
+      await updateProfile(user, { displayName: `${firstName} ${lastName}` });
+
+      // 5️⃣ Update sessionStorage with uid
+      const pending = JSON.parse(sessionStorage.getItem("pendingRegistration")!);
+      pending.uid = user.uid;
+      sessionStorage.setItem("pendingRegistration", JSON.stringify(pending));
+      console.log("handleRegister: Updated sessionStorage with UID:", user.uid);
+
+      // 6️⃣ Send OTP and store in sessionStorage
       const otpResponse = await sendOtpAction(email);
       if (!otpResponse.success) {
         throw new Error(otpResponse.message);
       }
+      console.log("handleRegister: OTP sent:", otpResponse);
+      sessionStorage.setItem('otpData', JSON.stringify({
+        otp: otpResponse.otp,
+        expiresAt: otpResponse.expiresAt,
+      }));
 
-      sessionStorage.setItem("activationEmail", email);
-
+      // 7️⃣ Show success toast and redirect
       toast({
-        title: "Registration Successful",
-        description: "Please check your email to activate your account.",
-        className: "bg-green-500 text-white",
+        title: "OTP Sent",
+        description: `Check ${email}`,
       });
 
+      // Clear form fields
       setFirstName("");
       setLastName("");
       setEmail("");
       setPassword("");
       setRole("entrepreneur");
+      setError("");
 
       router.push("/activate");
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Registration failed. Please try again.";
+      let errorMessage = "Registration failed. Please try again.";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
       setError(errorMessage);
-      console.error("Error registering:", err);
+      console.error("handleRegister: Error:", err);
       toast({
         title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
+      sessionStorage.removeItem("pendingRegistration");
+      sessionStorage.removeItem("otpData");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -109,7 +138,6 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white p-4 relative overflow-hidden">
-      {/* Animated Background Elements */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
@@ -139,7 +167,7 @@ export default function Register() {
               {error}
             </motion.div>
           )}
-          <div className="space-y-6">
+          <form onSubmit={(e) => { e.preventDefault(); handleRegister(); }} className="space-y-6">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
                 First Name
@@ -149,9 +177,7 @@ export default function Register() {
                 type="text"
                 placeholder="Enter your first name"
                 value={firstName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setFirstName(e.target.value)
-                }
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
                 variant="outline"
                 required
                 className="bg-slate-900/50 text-gray-100 border-slate-700"
@@ -166,9 +192,7 @@ export default function Register() {
                 type="text"
                 placeholder="Enter your last name"
                 value={lastName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setLastName(e.target.value)
-                }
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
                 variant="outline"
                 required
                 className="bg-slate-900/50 text-gray-100 border-slate-700"
@@ -183,9 +207,7 @@ export default function Register() {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setEmail(e.target.value)
-                }
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 variant="outline"
                 required
                 className="bg-slate-900/50 text-gray-100 border-slate-700"
@@ -200,9 +222,7 @@ export default function Register() {
                 type="password"
                 placeholder="Enter your password"
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setPassword(e.target.value)
-                }
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                 variant="outline"
                 required
                 className="bg-slate-900/50 text-gray-100 border-slate-700"
@@ -223,19 +243,17 @@ export default function Register() {
                 <option value="admin">Admin</option>
               </select>
             </div>
-            <motion.div
-              variants={buttonVariants}
-              whileHover="hover"
-              whileTap="tap"
-            >
+            <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
               <Button
+                type="submit"
                 aria-label="Register Account"
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                disabled={isLoading}
               >
-                Register
+                {isLoading ? "Registering..." : "Register"}
               </Button>
             </motion.div>
-          </div>
+          </form>
           <p className="mt-6 text-center text-gray-300">
             Already have an account?{" "}
             <Link
